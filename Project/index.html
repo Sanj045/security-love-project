@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Giám Sát Bảo Mật - Security Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0a0e14;
+            --card-bg: #151921;
+            --text-color: #cfd8dc;
+            --accent-color: #e94560;
+            --success-color: #00ff00;
+            --border-color: #1f4068;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 24px;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+            font-size: 18px;
+            border-left: 4px solid var(--accent-color);
+            padding-left: 10px;
+        }
+
+        /* Table Style */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #1a1a2e;
+            font-size: 14px;
+        }
+
+        .status-failed { color: #ff4d4d; font-weight: bold; }
+        .status-success { color: var(--success-color); font-weight: bold; }
+
+        /* Chart Area */
+        #chartContainer {
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Button Style */
+        .btn-clear {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-clear:hover {
+            background-color: #c92c4a;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🛡️ Security Monitoring Hub</h1>
+        <div style="text-align: right;">
+            <div class="live-indicator">● LIVE MONITORING SYSTEM</div>
+            <button class="btn-clear" onclick="clearLogs()" style="margin-top: 10px;">
+                🗑️ Xóa toàn bộ nhật ký
+            </button>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <h3>Nhật ký truy cập thời gian thực</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Địa chỉ IP</th>
+                            <th>Tài khoản</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTable">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Phân tích dữ liệu</h3>
+            <div id="chartContainer">
+                <canvas id="securityChart"></canvas>
+            </div>
+            <p style="text-align: center; font-size: 12px; color: #666; margin-top: 20px;">
+                Biểu đồ hiển thị tỉ lệ giữa đăng nhập thành công và các nỗ lực tấn công bị chặn.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let securityChart;
+
+    // 1. Hàm vẽ/cập nhật biểu đồ
+    function updateChart(success, failed) {
+        const ctx = document.getElementById('securityChart').getContext('2d');
+        if (!securityChart) {
+            securityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Thành công', 'Thất bại'],
+                    datasets: [{
+                        data: [success, failed],
+                        backgroundColor: ['#00ff00', '#ff4d4d'],
+                        borderColor: '#151921',
+                        borderWidth: 5
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#cfd8dc', padding: 20 } }
+                    }
+                }
+            });
+        } else {
+            securityChart.data.datasets[0].data = [success, failed];
+            securityChart.update();
+        }
+    }
+
+    // 2. Hàm lấy dữ liệu log từ API
+    async function fetchLogs() {
+        try {
+            const response = await fetch('/api/logs');
+            const logs = await response.json();
+            
+            const tbody = document.getElementById('logTable');
+            tbody.innerHTML = '';
+
+            logs.forEach(log => {
+                const row = `<tr>
+                    <td>${new Date(log.attempt_time).toLocaleTimeString('vi-VN')}</td>
+                    <td>${log.ip_address.replace('::ffff:', '')}</td>
+                    <td>${log.username}</td>
+                    <td><span class="${log.status === 'failed' ? 'status-failed' : 'status-success'}">
+                        ${log.status.toUpperCase()}
+                    </span></td>
+                </tr>`;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+            // Tính toán tỉ lệ cho biểu đồ
+            const successCount = logs.filter(l => l.status === 'success').length;
+            const failedCount = logs.filter(l => l.status === 'failed').length;
+            updateChart(successCount, failedCount);
+
+        } catch (error) {
+            console.error("Lỗi cập nhật dữ liệu:", error);
+        }
+    }
+
+    // 3. Hàm xóa toàn bộ nhật ký
+    async function clearLogs() {
+        if (confirm("Hệ thống sẽ xóa sạch lịch sử truy cập và reset bộ đếm bảo mật. Bạn có chắc không?")) {
+            try {
+                const response = await fetch('/api/logs', { method: 'DELETE' });
+                const result = await response.json();
+                alert(result.message);
+                fetchLogs(); // Làm mới lại bảng và biểu đồ
+            } catch (error) {
+                alert("Không thể xóa nhật ký!");
+            }
+        }
+    }
+
+    // Tự động cập nhật mỗi 2 giây
+    setInterval(fetchLogs, 2000);
+    fetchLogs(); // Chạy lần đầu ngay khi load trang
+</script>
+
+</body>
+</html>

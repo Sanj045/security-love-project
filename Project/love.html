@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Gửi người anh yêu</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #ffebee;
+            font-family: 'Segoe UI', cursive;
+            overflow: hidden;
+        }
+        h1 { color: #e91e63; font-size: 3rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+        p { font-size: 1.5rem; color: #ad1457; text-align: center; max-width: 80%; }
+        .heart {
+            position: absolute;
+            color: #ff4081;
+            font-size: 20px;
+            animation: fly 5s linear infinite;
+            opacity: 0;
+        }
+        @keyframes fly {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Chào Công Chúa của anh! ❤️</h1>
+    <p>Anh đã viết hệ thống bảo mật này chỉ để dành riêng một không gian bí mật cho em.<br>
+
+    <script>
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 5000);
+        }
+        setInterval(createHeart, 300);
+    </script>
+</body>
+</html>

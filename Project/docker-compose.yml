@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # 1. Service Database (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: security-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: security_lab
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      # Tự động chạy file init.sql để tạo bảng khi khởi tạo lần đầu
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      # Lưu dữ liệu ra máy thật để không bị mất khi tắt Docker
+      - db_data:/var/lib/mysql
+    networks:
+      - security-network
+
+  # 2. Service Ứng dụng (Node.js App)
+  app:
+    build: .
+    container_name: security-app
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      # Lưu ý: DB_HOST phải trùng với tên service ở trên (db)
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root_password
+      DB_NAME: security_lab
+    networks:
+      - security-network
+
+# Khai báo mạng nội bộ và ổ đĩa lưu trữ dữ liệu
+networks:
+  security-network:
+    driver: bridge
+
+volumes:
+  db_data:

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xác Thực Hệ Thống</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f2027; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; color: white; }
+        .auth-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 30px; border-radius: 15px; width: 350px; border: 1px solid rgba(255,255,255,0.1); }
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid #444; }
+        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #888; }
+        .tab.active { color: #00ff00; border-bottom: 2px solid #00ff00; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; background: rgba(0,0,0,0.5); color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #00ff00; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #00cc00; transform: scale(1.02); }
+        .hidden { display: none; }
+        #message { text-align: center; font-size: 13px; margin-top: 10px; min-height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="tabs">
+            <div id="tL" class="tab active" onclick="switchT('login')">ĐĂNG NHẬP</div>
+            <div id="tR" class="tab" onclick="switchT('register')">ĐĂNG KÝ</div>
+        </div>
+
+        <div id="fL">
+            <input type="text" id="uL" placeholder="Tên đăng nhập">
+            <input type="password" id="pL" placeholder="Mật khẩu">
+            <button onclick="send('/login', 'uL', 'pL')">ĐĂNG NHẬP</button>
+        </div>
+
+        <div id="fR" class="hidden">
+            <input type="text" id="uR" placeholder="Tên đăng ký">
+            <input type="password" id="pR" placeholder="Mật khẩu mới">
+            <button onclick="send('/register', 'uR', 'pR')">TẠO TÀI KHOẢN</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        function switchT(t) {
+            const isL = t === 'login';
+            document.getElementById('fL').classList.toggle('hidden', !isL);
+            document.getElementById('fR').classList.toggle('hidden', isL);
+            document.getElementById('tL').classList.toggle('active', isL);
+            document.getElementById('tR').classList.toggle('active', !isL);
+            document.getElementById('message').innerText = "";
+        }
+
+        async function send(url, uId, pId) {
+    const username = document.getElementById(uId).value;
+    const password = document.getElementById(pId).value;
+    
+    if(!username || !password) {
+        return Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập đủ tên và mật khẩu!', background: '#151921', color: '#fff' });
+    }
+
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password})
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            if (url.includes('login')) {
+                // LOGIC PHÂN LOẠI NGƯỜI DÙNG
+                if (username.toLowerCase() === 'admin') {
+                    // Nếu là admin -> Vào Dashboard
+                    Swal.fire({
+                        title: 'Chào Sếp!',
+                        text: 'Đang chuyển hướng đến trang quản trị...',
+                        icon: 'info',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#151921',
+                        color: '#fff'
+                    }).then(() => {
+                        window.location.replace('/index.html');
+                    });
+                } else {
+                    // Nếu không phải admin (ví dụ tài khoản của bạn gái) -> Vào trang Love
+                    Swal.fire({ 
+                        title: 'Đăng nhập thành công!', 
+                        text: 'Chào mừng em đến với không gian bí mật của anh ❤️', 
+                        icon: 'success', 
+                        background: '#151921', 
+                        color: '#fff', 
+                        confirmButtonColor: '#e91e63',
+                        confirmButtonText: 'Khám phá ngay'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.replace('/love.html'); 
+                        }
+                    });
+                }
+            } else {
+                // Thông báo khi đăng ký thành công
+                Swal.fire({ title: 'Đã tạo tài khoản!', text: 'Bây giờ hãy đăng nhập nhé!', icon: 'success', background: '#151921', color: '#fff' });
+                switchT('login');
+            }
+            document.getElementById(uId).value = ''; 
+            document.getElementById(pId).value = '';
+        } else {
+            document.getElementById('message').innerText = "❌ " + data.message;
+            document.getElementById('message').style.color = "#ff4d4d";
+        }
+    } catch (e) { 
+        Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể kết nối server!', background: '#151921', color: '#fff' });
+    }
+}
+    </script>
+</body>
+</html>
